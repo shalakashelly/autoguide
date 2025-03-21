@@ -5,62 +5,72 @@ import Button from "@digital-hig/mui/Button";
 import Input from "@digital-hig/mui/Input";
 import Typography from "@digital-hig/mui/Typography";
 
+const WS_URL = "ws://localhost:8001/ws"; // WebSocket server URL
+
 const AISearch = () => {
   const [query, setQuery] = useState("");
   const [conversation, setConversation] = useState([]);
-  const [isBoxExpanded, setIsBoxExpanded] = useState(false);
-  const conversationEndRef = useRef(null);
+  const [isBoxExpanded, setIsBoxExpanded] = useState(true);
+  const ws = useRef(null);
+
+  useEffect(() => {
+    ws.current = new WebSocket(WS_URL);
+
+    ws.current.onopen = () => {
+      console.log("WebSocket connected!");
+    };
+
+    ws.current.onmessage = (event) => {
+      try {
+        const data = event.data; // Parse JSON response
+        console.log("Received from WebSocket:", data);
+
+        setConversation((prev) => {
+          if (prev.length === 0) return prev; // Prevent empty updates
+
+          const updatedMessages = [...prev];
+          updatedMessages[updatedMessages.length - 1].ai = data || "No response";
+          return updatedMessages;
+        });
+      } catch (error) {
+        console.error("WebSocket message error:", error);
+      }
+    };
+
+    ws.current.onerror = (error) => {
+      console.error("WebSocket Error:", error);
+    };
+
+    ws.current.onclose = () => {
+      console.log("WebSocket Disconnected!");
+    };
+
+    return () => {
+      if (ws.current) ws.current.close();
+    };
+  }, []);
 
   const handleSendMessage = () => {
-    if (!query.trim()) return;
+    if (!query.trim() || !ws.current || ws.current.readyState !== WebSocket.OPEN) return;
 
     const newMessage = { user: query, ai: "Thinking..." };
     setConversation((prev) => [...prev, newMessage]);
 
-    // After the first message, expand the box
     if (!isBoxExpanded) {
       setIsBoxExpanded(true);
     }
 
-    setTimeout(() => {
-      const aiResponse = `AI response for: ${query}`;
-      setConversation((prev) => {
-        // Only update the last message if it exists
-        if (prev.length > 0) {
-          const updatedMessages = [...prev];
-          updatedMessages[updatedMessages.length - 1].ai = aiResponse;
-          return updatedMessages;
-        }
-        return prev; // If no messages, return prev unchanged
-      });
-    }, 1500);
-
+    ws.current.send(JSON.stringify({ message: query })); // Ensure message is sent as JSON
     setQuery("");
   };
 
   const handleClearChat = () => {
     setConversation([]);
-    setIsBoxExpanded(false); // Reset box height after clearing chat
+    setIsBoxExpanded(false);
   };
 
-  // Scroll to the bottom when the conversation changes
-  useEffect(() => {
-    if (conversationEndRef.current) {
-      conversationEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
-  }, [conversation]); // Runs every time the conversation changes
-
   return (
-    <Container maxWidth="sm">
-      <Typography
-        variant="h4"
-        align="center"
-        gutterBottom
-        sx={{ margin: "20px 0" }}
-      >
-        Design and make anything with Autodesk software
-      </Typography>
-
+    <Container maxWidth="sm" sx={{ margin: "30px" }}>
       <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
         <Box
           sx={{
@@ -70,11 +80,7 @@ const AISearch = () => {
             marginBottom: "15px",
           }}
         >
-          <Typography variant="h6">
-            What would you like to design and make today?
-          </Typography>
-
-          {/* Conditionally render the Clear Chat button */}
+          <Typography variant="h6">What would you like to design and make today?</Typography>
           {conversation.length > 0 && (
             <Button onClick={handleClearChat} variant="outlined" size="small">
               Clear Chat
@@ -82,16 +88,15 @@ const AISearch = () => {
           )}
         </Box>
 
-        {/* Scrollable conversation box */}
+        {/* Scrollable Conversation Box */}
         <Box
           sx={{
             mt: 2,
-            maxHeight: isBoxExpanded ? "400px" : 300, // Expand box on first message
+            maxHeight: "400px",
             overflowY: "auto",
             bgcolor: "#f5f5f5",
             borderRadius: 1,
-            position: "relative", // Positioning context for Clear Chat button
-            mb: 2, // Adding space to separate the conversation from the input area
+            mb: 2,
           }}
         >
           {conversation.map((msg, index) => (
@@ -102,41 +107,45 @@ const AISearch = () => {
                 display: "flex",
                 flexDirection: "column",
                 padding: "20px",
+                gap: "15px"
               }}
             >
+              {/* User Message */}
               <Typography
-                variant="body1"
+                variant="body-copy-medium"
                 sx={{
                   color: "#fff",
                   bgcolor: "#37474F",
-                  p: 1,
+                  padding: "10px",
                   borderRadius: "8px 0px 8px 8px",
                   width: "fit-content",
                   alignSelf: "flex-end",
+                  textAlign: "right",
                 }}
               >
                 {msg.user}
               </Typography>
+
+              {/* AI Response */}
               <Typography
-                variant="body2"
+                variant="body-copy-medium"
                 sx={{
                   mt: 1,
                   bgcolor: "#ECEFF1",
-                  p: 1,
+                  padding: "10px",
                   borderRadius: "0px 8px 8px 8px",
                   width: "fit-content",
                   alignSelf: "flex-start",
+                  textAlign: "left",
                 }}
               >
                 {msg.ai}
               </Typography>
             </Box>
           ))}
-          {/* This is the scroll target to always bring the scroll to the bottom */}
-          <div ref={conversationEndRef} />
         </Box>
 
-        {/* Input and send button area */}
+        {/* Input and Send Button */}
         <Box sx={{ display: "flex", alignItems: "center" }}>
           <Input
             fullWidth
@@ -150,12 +159,7 @@ const AISearch = () => {
             }}
             sx={{ mr: 1 }}
           />
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleSendMessage}
-            disabled={!query.trim()} // Disable if query is empty
-          >
+          <Button variant="contained" color="primary" onClick={handleSendMessage} disabled={!query.trim()}>
             Send
           </Button>
         </Box>

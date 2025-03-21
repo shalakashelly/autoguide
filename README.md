@@ -1,3 +1,33 @@
+🚀 AI Search - Chat with AI in Real Time
+
+AI Search is a modern React-based chat interface that allows users to interact with an AI model in real time. The frontend is built using React and Digital HIG, and it communicates with a backend WebSocket server that processes user queries using a trained AI model.
+
+📌 Features
+
+✅ Real-Time AI Responses – Send a query and receive AI-generated responses instantly.
+
+✅ WebSocket Integration – Enables seamless, persistent communication with the backend.
+
+✅ Digital HIG UI Components – Styled with @digital-hig/mui for a clean UI.
+
+✅ Auto-Expanding Chat Window – Dynamically expands when a conversation starts.
+
+✅ Scroll to Latest Message – Ensures a smooth user experience.
+
+✅ Clear Chat Option – Easily reset the conversation.
+
+🏗️ Tech Stack
+
+Frontend (React)
+
+React 19 (UI framework)
+
+Digital HIG (MUI) (UI components)
+
+WebSockets (Real-time communication)
+
+Python
+
 # Getting Started with Create React App
 
 This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).

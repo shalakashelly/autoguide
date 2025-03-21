@@ -1,5 +1,4 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Container, Paper } from "@mui/material";
 import Box from "@digital-hig/mui/Box";
 import Button from "@digital-hig/mui/Button";
 import Input from "@digital-hig/mui/Input";
@@ -12,6 +11,14 @@ const AISearch = () => {
   const [conversation, setConversation] = useState([]);
   const [isBoxExpanded, setIsBoxExpanded] = useState(true);
   const ws = useRef(null);
+  const scrollContainerRef = useRef(null);
+
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    if (scrollContainer) {
+      scrollContainer.scrollTop = scrollContainer.scrollHeight;
+    }
+  }, [conversation]);
 
   useEffect(() => {
     ws.current = new WebSocket(WS_URL);
@@ -22,14 +29,15 @@ const AISearch = () => {
 
     ws.current.onmessage = (event) => {
       try {
-        const data = event.data; // Parse JSON response
+        const data = event.data;
         console.log("Received from WebSocket:", data);
 
         setConversation((prev) => {
           if (prev.length === 0) return prev; // Prevent empty updates
 
           const updatedMessages = [...prev];
-          updatedMessages[updatedMessages.length - 1].ai = data || "No response";
+          updatedMessages[updatedMessages.length - 1].ai =
+            data || "No response";
           return updatedMessages;
         });
       } catch (error) {
@@ -51,9 +59,14 @@ const AISearch = () => {
   }, []);
 
   const handleSendMessage = () => {
-    if (!query.trim() || !ws.current || ws.current.readyState !== WebSocket.OPEN) return;
+    if (
+      !query.trim() ||
+      !ws.current ||
+      ws.current.readyState !== WebSocket.OPEN
+    )
+      return;
 
-    const newMessage = { user: query, ai: "Thinking..." };
+    const newMessage = { user: query, ai: "...." };
     setConversation((prev) => [...prev, newMessage]);
 
     if (!isBoxExpanded) {
@@ -70,8 +83,16 @@ const AISearch = () => {
   };
 
   return (
-    <Container maxWidth="sm" sx={{ margin: "30px" }}>
-      <Paper elevation={3} sx={{ p: 3, borderRadius: 2 }}>
+    <Box sx={{ margin: "2% 5%" }}>
+      <Box
+        sx={{
+          p: 5,
+          borderRadius: 2,
+          border: "1px solid #ddd", // Adds a border
+          boxShadow: 3, // Adds subtle shadow
+          backgroundColor: "#fff",
+        }}
+      >
         <Box
           sx={{
             display: "flex",
@@ -80,7 +101,9 @@ const AISearch = () => {
             marginBottom: "15px",
           }}
         >
-          <Typography variant="h6">What would you like to design and make today?</Typography>
+          <Typography variant="h6">
+            What would you like to design and make today?
+          </Typography>
           {conversation.length > 0 && (
             <Button onClick={handleClearChat} variant="outlined" size="small">
               Clear Chat
@@ -98,6 +121,7 @@ const AISearch = () => {
             borderRadius: 1,
             mb: 2,
           }}
+          ref={scrollContainerRef}
         >
           {conversation.map((msg, index) => (
             <Box
@@ -107,7 +131,7 @@ const AISearch = () => {
                 display: "flex",
                 flexDirection: "column",
                 padding: "20px",
-                gap: "15px"
+                gap: "15px",
               }}
             >
               {/* User Message */}
@@ -121,6 +145,7 @@ const AISearch = () => {
                   width: "fit-content",
                   alignSelf: "flex-end",
                   textAlign: "right",
+                  maxWidth: "70%",
                 }}
               >
                 {msg.user}
@@ -137,6 +162,7 @@ const AISearch = () => {
                   width: "fit-content",
                   alignSelf: "flex-start",
                   textAlign: "left",
+                  maxWidth: "70%",
                 }}
               >
                 {msg.ai}
@@ -146,10 +172,10 @@ const AISearch = () => {
         </Box>
 
         {/* Input and Send Button */}
-        <Box sx={{ display: "flex", alignItems: "center" }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: "12px" }}>
           <Input
             fullWidth
-            placeholder="Describe your project..."
+            placeholder="Ask anything..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
             onKeyDown={(e) => {
@@ -159,12 +185,17 @@ const AISearch = () => {
             }}
             sx={{ mr: 1 }}
           />
-          <Button variant="contained" color="primary" onClick={handleSendMessage} disabled={!query.trim()}>
+          <Button
+            variant="contained"
+            color="primary"
+            onClick={handleSendMessage}
+            disabled={!query.trim()}
+          >
             Send
           </Button>
         </Box>
-      </Paper>
-    </Container>
+      </Box>
+    </Box>
   );
 };
 

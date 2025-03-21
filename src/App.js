@@ -22,7 +22,7 @@ function App() {
         />
       </header>
         <AISearch />
-        <Typography variant="headline-large" color="ink-on-background">All Products</Typography>
+        <Typography variant="headline-large" color="ink-on-background" sx={{ textAlign: "left", margin: "0 5%", padding: "10px 0" }}>All Products</Typography>
         <ProductCard /> 
       </div>
     </ThemeProvider>
